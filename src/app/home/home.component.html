@@ -1,7 +1,27 @@
-<div class="container">
-  <h1 class="title">
-    {{ 'PAGES.HOME.TITLE' | translate }}
-  </h1>
+<h1> App Works!</h1>
 
-  <a routerLink="/detail">{{ 'PAGES.HOME.GO_TO_DETAIL' | translate }}</a>
+
+<div style="margin: 50px;">
+  <div style="display: flex; gap: 20px;">
+    <input type="file" #fileCtrl (change)="onFileChange($event)" multiple>
+
+    <button (click)="reset()"> Reset </button>
+
+    <button (click)="compress()"> Compress </button>
+  </div>
+
+
+  <div style="margin-top: 50px;">
+
+    @for(path of filePaths; track path) {
+    <p>
+      {{ path }}
+    </p>
+    }
+
+    @if((loading$ | async) === true) {
+    <b> Loading.... </b>
+    }
+
+  </div>
 </div>

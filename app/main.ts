@@ -1,24 +1,30 @@
-import {app, BrowserWindow, screen} from 'electron';
+import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
 
+//import imagemin from 'imagemin';
+//import imageminPngquant from 'imagemin-pngquant';
+const imagemin = require('imagemin');
+const imageminPngquant = require('imagemin-pngquant');
+
 let win: BrowserWindow | null = null;
 const args = process.argv.slice(1),
-  serve = args.some(val => val === '--serve');
+  serve = args.some((val) => val === '--serve');
 
 function createWindow(): BrowserWindow {
-
   const size = screen.getPrimaryDisplay().workAreaSize;
 
   // Create the browser window.
   win = new BrowserWindow({
     x: 0,
     y: 0,
-    width: size.width,
-    height: size.height,
+    //width: size.width,
+    //height: size.height,
+    width: 1280,
+    height: 720,
     webPreferences: {
       nodeIntegration: true,
-      allowRunningInsecureContent: (serve),
+      allowRunningInsecureContent: serve,
       contextIsolation: false,
     },
   });
@@ -34,7 +40,7 @@ function createWindow(): BrowserWindow {
     let pathIndex = './index.html';
 
     if (fs.existsSync(path.join(__dirname, '../dist/index.html'))) {
-       // Path when running electron in local folder
+      // Path when running electron in local folder
       pathIndex = '../dist/index.html';
     }
 
@@ -76,8 +82,65 @@ try {
       createWindow();
     }
   });
-
 } catch (e) {
   // Catch Error
   // throw e;
 }
+
+// **Listen for file paths from Renderer Process**
+ipcMain.on('compress-images', async (event, filePaths) => {
+
+  //WORKS!!!
+  
+  if (!filePaths) return;
+
+  try {
+    const updatedPaths = filePaths.map((path) => path.replace(/\\/g, '//'));
+    //const destination =  path.join(__dirname, 'compressed');
+
+    const destination = `D://compressed`;
+
+    console.log('File paths (updated):', updatedPaths);
+    console.log('Destination path:', destination);
+
+    //const result = await imagemin(['D://img1.png', 'D://img2.png'], {
+    const result = await imagemin(
+      // [
+      //   'C:\\Users\\solat\\Downloads\\thumbnail.png',
+      //   'C:\\Users\\solat\\Downloads\\thumbnail_ops.png',
+      //   'C:\\Users\\solat\\Downloads\\2025-02-23_22-17-19.png',
+      //   'C:\\Users\\solat\\Downloads\\case-study-page.drawio.png',
+      //   'C:\\Users\\solat\\Downloads\\landing_sample.png',
+      // ],
+      updatedPaths,
+      {
+        destination:destination,
+        plugins: [
+          imageminPngquant({
+            quality: [0.6, 0.8],
+          }),
+        ],
+      }
+    );
+
+    //console.log('Images optimized: ', result);
+
+    // Send a success response back to the Angular component
+    event.reply('compress-images-response', {
+      success: true,
+      response: result,
+    });
+
+    //win?.webContents.send('compress-images-response', {success: true, response: ''});
+  } catch (error) {
+    console.log('Error: ', error);
+
+    // Send an error response back to the Angular component
+    event.reply('compress-images-response', {
+      success: false,
+      response: error,
+    });
+
+    //win?.webContents.send('compress-images-response', {success: false, response: error});
+  }
+});
