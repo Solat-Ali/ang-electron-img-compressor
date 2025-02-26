@@ -1,6 +1,4 @@
-<h1> App Works!</h1>
-
-
+@if(electronService.isElectron){
 <div style="margin: 50px;">
   <div style="display: flex; gap: 20px;">
     <input type="file" #fileCtrl (change)="onFileChange($event)" multiple>
@@ -25,3 +23,7 @@
 
   </div>
 </div>
+}
+@else {
+<h3>Sorry, but image compression is only available in Electron app!</h3>
+}

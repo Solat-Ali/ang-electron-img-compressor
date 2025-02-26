@@ -71,8 +71,6 @@
     "@angular-eslint/template-parser": "17.3.0",
     "@angular/cli": "17.3.6",
     "@angular/compiler-cli": "17.3.6",
-    "@ngx-translate/core": "15.0.0",
-    "@ngx-translate/http-loader": "8.0.0",
     "@playwright/test": "1.43.1",
     "@types/imagemin": "7.0.1",
     "@types/jest": "29.5.12",
