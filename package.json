@@ -54,6 +54,8 @@
     "@angular/platform-browser": "17.3.6",
     "@angular/platform-browser-dynamic": "17.3.6",
     "@angular/router": "17.3.6",
+    "imagemin": "7.0.1",
+    "imagemin-pngquant": "7.0.0",
     "rxjs": "7.8.1",
     "tslib": "2.6.2",
     "zone.js": "0.14.4"
@@ -72,6 +74,7 @@
     "@ngx-translate/core": "15.0.0",
     "@ngx-translate/http-loader": "8.0.0",
     "@playwright/test": "1.43.1",
+    "@types/imagemin": "7.0.1",
     "@types/jest": "29.5.12",
     "@types/node": "20.12.7",
     "@typescript-eslint/eslint-plugin": "7.7.1",

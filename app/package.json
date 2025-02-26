@@ -9,5 +9,10 @@
   "main": "main.js",
   "private": true,
   "dependencies": {
+    "imagemin": "7.0.1",
+    "imagemin-pngquant": "7.0.0"
+  },
+  "devDependencies": {
+    "@types/imagemin": "7.0.1"
   }
 }
