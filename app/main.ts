@@ -1,6 +1,10 @@
-import { app, BrowserWindow, screen, ipcMain } from 'electron';
+import { app, BrowserWindow, screen, ipcMain, protocol, dialog } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+import {
+  ImgCompressionReq,
+  ImgCompressionService,
+} from '../src/app/data-access';
 
 //import imagemin from 'imagemin';
 //import imageminPngquant from 'imagemin-pngquant';
@@ -20,8 +24,9 @@ function createWindow(): BrowserWindow {
     y: 0,
     //width: size.width,
     //height: size.height,
-    width: 1280,
-    height: 720,
+    width: 1920,
+    height: 1080,
+    autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
       allowRunningInsecureContent: serve,
@@ -35,6 +40,11 @@ function createWindow(): BrowserWindow {
 
     require('electron-reloader')(module);
     win.loadURL('http://localhost:4200');
+
+    // Prevent default security policy that blocks file drag-and-drop
+    win.webContents.on('will-navigate', (event) => {
+      event.preventDefault();
+    });
   } else {
     // Path when running electron executable
     let pathIndex = './index.html';
@@ -64,7 +74,13 @@ try {
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
   // Added 400 ms to fix the black background issue while using transparent window. More detais at https://github.com/electron/electron/issues/15947
-  app.on('ready', () => setTimeout(createWindow, 400));
+  app.on('ready', () => {
+    setTimeout(createWindow, 400);
+    protocol.registerFileProtocol('file', (request, callback) => {
+      const pathname = decodeURI(request.url.replace('file:///', ''));
+      callback(pathname);
+    });
+  });
 
   // Quit when all windows are closed.
   app.on('window-all-closed', () => {
@@ -88,59 +104,57 @@ try {
 }
 
 // **Listen for file paths from Renderer Process**
-ipcMain.on('compress-images', async (event, filePaths) => {
+ipcMain.on(
+  'compress-images',
+  async (event, compressionReq: ImgCompressionReq) => {
+    console.log('Compression request: ', compressionReq);
 
-  //WORKS!!!
-  
-  if (!filePaths) return;
+    try {
+      const result = await imagemin(
+        compressionReq.filePaths,
+        {
+          destination: compressionReq.destination,
+          plugins: [
+            imageminPngquant({
+              quality: [
+                // compressionReq.configs?.pngConfig?.quality?.min,
+                // compressionReq.configs?.pngConfig?.quality?.max
+                0.6,
+                0.8
+              ]
+            }),
+          ],
+        }
+      );
 
-  try {
-    const updatedPaths = filePaths.map((path) => path.replace(/\\/g, '//'));
-    //const destination =  path.join(__dirname, 'compressed');
+      //console.log('Images optimized: ', result);
 
-    const destination = `D://compressed`;
+      // Send a success response back to the Angular component
+      event.reply('compress-images-response', {
+        success: true,
+        response: result,
+      });
+    } catch (error) {
+      console.log('Error: ', error);
 
-    console.log('File paths (updated):', updatedPaths);
-    console.log('Destination path:', destination);
+      // Send an error response back to the Angular component
+      event.reply('compress-images-response', {
+        success: false,
+        response: error,
+      });
+    }
+  }
+);
 
-    //const result = await imagemin(['D://img1.png', 'D://img2.png'], {
-    const result = await imagemin(
-      // [
-      //   'C:\\Users\\solat\\Downloads\\thumbnail.png',
-      //   'C:\\Users\\solat\\Downloads\\thumbnail_ops.png',
-      //   'C:\\Users\\solat\\Downloads\\2025-02-23_22-17-19.png',
-      //   'C:\\Users\\solat\\Downloads\\case-study-page.drawio.png',
-      //   'C:\\Users\\solat\\Downloads\\landing_sample.png',
-      // ],
-      updatedPaths,
-      {
-        destination:destination,
-        plugins: [
-          imageminPngquant({
-            quality: [0.6, 0.8],
-          }),
-        ],
-      }
-    );
-
-    //console.log('Images optimized: ', result);
-
-    // Send a success response back to the Angular component
-    event.reply('compress-images-response', {
-      success: true,
-      response: result,
+ipcMain.on('select-directory', async (event, arg) => {
+  if (win) {
+    const result = await dialog.showOpenDialog(win, {
+      properties: ['openDirectory'],
     });
 
-    //win?.webContents.send('compress-images-response', {success: true, response: ''});
-  } catch (error) {
-    console.log('Error: ', error);
-
-    // Send an error response back to the Angular component
-    event.reply('compress-images-response', {
-      success: false,
-      response: error,
+    const selectedDirectory = result.filePaths[0];
+    event.reply('select-directory-response', {
+      selectedDirectory: selectedDirectory,
     });
-
-    //win?.webContents.send('compress-images-response', {success: false, response: error});
   }
 });
