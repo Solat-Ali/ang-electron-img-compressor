@@ -1,13 +1,15 @@
-import { app, BrowserWindow, screen, ipcMain, protocol, dialog } from 'electron';
-import * as path from 'path';
-import * as fs from 'fs';
 import {
-  ImgCompressionReq,
-  ImgCompressionService,
-} from '../src/app/data-access';
+  app,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  protocol,
+  screen,
+} from 'electron';
+import * as fs from 'fs';
+import * as path from 'path';
+import { ImgCompressionRequest } from '../src/app/data-access';
 
-//import imagemin from 'imagemin';
-//import imageminPngquant from 'imagemin-pngquant';
 const imagemin = require('imagemin');
 const imageminPngquant = require('imagemin-pngquant');
 
@@ -22,10 +24,8 @@ function createWindow(): BrowserWindow {
   win = new BrowserWindow({
     x: 0,
     y: 0,
-    //width: size.width,
-    //height: size.height,
-    width: 1920,
-    height: 1080,
+    width: 1024,
+    height: 768,
     autoHideMenuBar: true,
     webPreferences: {
       nodeIntegration: true,
@@ -106,33 +106,13 @@ try {
 // **Listen for file paths from Renderer Process**
 ipcMain.on(
   'compress-images',
-  async (event, compressionReq: ImgCompressionReq) => {
-    console.log('Compression request: ', compressionReq);
-
+  async (event, compressionReqs: ImgCompressionRequest[]) => {
     try {
-      const result = await imagemin(
-        compressionReq.filePaths,
-        {
-          destination: compressionReq.destination,
-          plugins: [
-            imageminPngquant({
-              quality: [
-                // compressionReq.configs?.pngConfig?.quality?.min,
-                // compressionReq.configs?.pngConfig?.quality?.max
-                0.6,
-                0.8
-              ]
-            }),
-          ],
-        }
-      );
+      await Promise.all(compressionReqs.map((req) => compress(req)));
 
-      //console.log('Images optimized: ', result);
-
-      // Send a success response back to the Angular component
       event.reply('compress-images-response', {
         success: true,
-        response: result,
+        response: 'files compressed',
       });
     } catch (error) {
       console.log('Error: ', error);
@@ -145,6 +125,52 @@ ipcMain.on(
     }
   }
 );
+
+async function compress(req: ImgCompressionRequest) {
+  // compress image to destination
+  await imagemin([req.filePath], {
+    destination: !req.preserveDir ? req.destination : req.tempDir,
+    plugins: [
+      imageminPngquant({
+        quality: [req.qualityConfig?.min, req.qualityConfig?.max],
+      }),
+    ],
+  });
+
+  if (!req.preserveDir) {
+    return;
+  }
+
+  let tempFilePath = req.tempDir + '//' + req.fileNameOnly;
+
+  if (!req.fileSuffix) {
+    // overwrite file 
+    await fs.copyFile(
+      tempFilePath + req.fileExt,
+      req.destination + req.fileName,
+      () => {}
+    );
+  } 
+
+  else {
+    // Rename the file with a suffix
+    await fs.rename(
+      tempFilePath + req.fileExt,
+      tempFilePath + req.fileSuffix + req.fileExt,
+      () => {}
+    );
+    tempFilePath += req.fileSuffix + req.fileExt;
+
+    await fs.copyFile(
+      tempFilePath,
+      req.destination + req.fileNameOnly + req.fileSuffix + req.fileExt,
+      () => {}
+    );
+  }
+
+  // delete temp directory
+  await fs.rm(req.tempDir ?? '', { recursive: true, force: true}, ()=> {});
+}
 
 ipcMain.on('select-directory', async (event, arg) => {
   if (win) {

@@ -1,16 +1,16 @@
 import { Injectable, inject } from '@angular/core';
 import { ElectronService } from '../../core/services';
-import { ImgCompressionReq } from '../models';
+import { ImgCompressionRequest } from '../models';
 
 @Injectable()
 export class ImgCompressionService {
   electronService = inject(ElectronService);
 
   compressImages(
-    compressionReq: ImgCompressionReq,
+    compressionReqs: ImgCompressionRequest[],
     callback: (evt: any, message: any) => void
   ) {
-    this.electronService.ipcRenderer.send('compress-images', compressionReq);
+    this.electronService.ipcRenderer.send('compress-images', compressionReqs);
 
     this.electronService.ipcRenderer.once(
       'compress-images-response',

@@ -2,7 +2,7 @@
 <h1 class="mt-60 text-center text-red-600">Sorry, but this application needs to run in Electron!</h1>
 }
 @else { -->
-<div class="content mx-auto p-3 border-b-neutral-300">
+<div class="content mx-auto p-5">
   <div class="text-center">
     <h1 class="mt-5">
       Image Compressor
@@ -13,16 +13,15 @@
   </div>
 
   <div class="cbg-white rounded px-8 pt-6 pb-8 mb-4">
-
+ 
     <form #reqForm [formGroup]="imgCompressionForm" (ngSubmit)="compress()">
       <div class="mb-8">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
           1. Select Images
           <span class="text-red-500">*</span>
         </label>
-        <!-- <app-file-drag-drop (fileChange)="onFileChange($event)" name="files"></app-file-drag-drop> -->
 
-        <mat-form-field class="w-full">
+        <mat-form-field class="w-full dropzone">
           <mat-label>Drag & Drop Images, Or Browse to Select</mat-label>
           <ngx-mat-dropzone>
             <input type="file" fileInput multiple [formControl]="filesCtrl" accept="image/png" />
@@ -47,9 +46,9 @@
         </mat-form-field>
       </div>
 
-      <div class="mb-8">
+      <div class="mb-4">
         <div class="flex items-center gap-2">
-          <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
+          <label class="block text-gray-700 text-sm font-bold mb-2">
             2. Output Directory
           </label>
           <mat-icon fontIcon="info_outline" class="content__icon"
@@ -66,8 +65,6 @@
                   [disabled]="showPreserveDir" (click)="selectDirectory()"> Set Custom Directory </button>
                 &nbsp; {{ outputDir?.value}}
               </label>
-
-              {{ outputDir?.errors | json }}
             </div>
 
             @if(outputDir?.hasError('required') && (outputDir?.touched || submitted)){
@@ -83,133 +80,51 @@
       </div>
 
       @if(showPreserveDir){
-        <div class="mb-8">
-          <mat-checkbox formControlName="overwrite">
+      <div class="mb-8">
+        <mat-checkbox formControlName="overwrite">
+          <span class="flex gap-2">
             Overwrite File?
             <mat-icon fontIcon="info_outline" class="content__icon"
-            [matTooltip]="'Overwrite files in original directories with same name, or add default suffix to compressed file names'"
-            [matTooltipPosition]="'right'"></mat-icon>
-          </mat-checkbox>
-        </div>
-      }
-      
-
-
-      <!-- @if(showPreserveDir){
-        <div class="mb-8">
-          <div class="flex items-center gap-2">
-            <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
-              3. File Overwrite Behavior
-            </label>
-            <mat-icon fontIcon="info_outline" class="content__icon"
-              [matTooltip]="'Select an option to either overwrite original file or create new file with a suffix'"
+              [matTooltip]="'Overwrite files in original directories with same name, or add default suffix to compressed file names'"
               [matTooltipPosition]="'right'"></mat-icon>
-          </div>
-  
-          <mat-radio-group formControlName="overwriteConfig" class="flex flex-col">
-            <mat-radio-button value="renameWithSuffix">Rename</mat-radio-button>
-            <mat-radio-button value="overwrite">Overwrite</mat-radio-button>
-          </mat-radio-group>
-  
-          @if(showFileRename){
-          <div class="mt-2">
-            <mat-form-field class="w-full">
-              <mat-label>File Suffix</mat-label>
-              <input matInput #fileSuffix formControlName="fileSuffix">
-  
-              @if(imgCompressionForm.get('fileSuffix')?.hasError('required')){
-              <mat-error>
-                File suffix is required
-              </mat-error>
-              }
-  
-            </mat-form-field>
-          </div>
-          }
-  
+          </span>  
+          
+        </mat-checkbox>
+      </div>
+      }
+
+      <div class="mb-5">
+        <div class="flex items-center gap-2">
+          <label class="block text-gray-700 text-sm font-bold mb-2">
+            3. Compression Level
+          </label>
+          <mat-icon fontIcon="info_outline" class="content__icon"
+          [matTooltip]="'Choose a value between 0.1 and 1.0. Higher values mean lower compression and increased compressed file size'"
+          [matTooltipPosition]="'right'"></mat-icon>
         </div>
-      } -->
 
 
-
-
-      <!-- <div class="mb-8">
-        <label class="block text-gray-700 text-sm font-bold mb-2" for="password">
-          4. See The Magic!
-        </label> -->
-
-      <!-- Preview Results -->
-      <!-- <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 demo-table">
-            <ng-container matColumnDef="fileName">
-              <mat-header-cell *matHeaderCellDef> File Name </mat-header-cell>
-              <mat-cell *matCellDef="let file"> {{file.fileName}} </mat-cell>
-            </ng-container>
-    
-            <ng-container matColumnDef="fileType">
-              <mat-header-cell *matHeaderCellDef> File Type </mat-header-cell>
-              <mat-cell *matCellDef="let file"> {{file.fileType}} </mat-cell>
-            </ng-container>
-    
-            <ng-container matColumnDef="originalSize">
-              <mat-header-cell *matHeaderCellDef> Original Size</mat-header-cell>
-              <mat-cell *matCellDef="let file"> {{file.originalSize}} </mat-cell>
-            </ng-container>
-    
-            <ng-container matColumnDef="compressedSize">
-              <mat-header-cell *matHeaderCellDef> Compressed Size</mat-header-cell>
-              <mat-cell *matCellDef="let file"> {{file.compressedSize}} </mat-cell>
-            </ng-container>
-    
-            <mat-header-row *matHeaderRowDef="displayedColumns"></mat-header-row>
-            <mat-row *matRowDef="let row; columns: displayedColumns;"></mat-row>
-            <mat-row *matNoDataRow>
-              <mat-cell [attr.colspan]="displayedColumns.length" class="text-red-500 font-bold text-center">No Files Added!</mat-cell>
-            </mat-row>
-          </table> -->
-
-
-      <!-- <table mat-table [dataSource]="dataSource">
-            <ng-container matColumnDef="fileName">
-              <th mat-header-cell *matHeaderCellDef>No.</th>
-              <td mat-cell *matCellDef="let element">{{element.fileName}}</td>
-            </ng-container>
-          
-            <ng-container matColumnDef="fileType">
-              <th mat-header-cell *matHeaderCellDef>Name</th>
-              <td mat-cell *matCellDef="let element">{{element.fileType}}</td>
-            </ng-container>
-          
-            <ng-container matColumnDef="originalSize">
-              <th mat-header-cell *matHeaderCellDef>Weight</th>
-              <td mat-cell *matCellDef="let element">{{element.originalSize}}</td>
-            </ng-container>
-          
-            <ng-container matColumnDef="compressedSize">
-              <th mat-header-cell *matHeaderCellDef>Symbol</th>
-              <td mat-cell *matCellDef="let element">{{element.compressedSize}}</td>
-            </ng-container>
-          
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
-          </table> 
-
-      </div> -->
+        <div class="content__slider">
+          <mat-slider min="0.1" max="1.0" step="0.1" discrete="true">
+            <input value="0.2" matSliderStartThumb formControlName="minQuality">
+            <input value="0.8" matSliderEndThumb formControlName="maxQuality">
+          </mat-slider>
+        </div>
+      </div>
 
       <div class="flex justify-center gap-5">
-        <button type="submit" class="cta" mat-raised-button color="primary">
+        <button type="submit" class="cta" mat-raised-button>
           @if((loading$ | async) === true){
-          <mat-spinner diameter="20"></mat-spinner>
+          <mat-spinner class="spinner" diameter="20" color="accent"></mat-spinner>
           }
           Compress
         </button>
 
-        <button mat-raised-button color="warn" (click)="reset()">
+        <button type="button" mat-raised-button color="warn" (click)="reset()">
           Reset
         </button>
-
       </div>
     </form>
 
   </div>
 </div>
-<!-- } -->

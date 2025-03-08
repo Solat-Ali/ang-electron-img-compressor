@@ -1,24 +1,31 @@
-.content { 
-    width: 720px;
-    border: 1px solid black;
+.content {
+  width: 720px;
 }
 
-.cta{ 
-    &.mdc-button .mdc-button__label {
-        display: flex !important;
-        gap: 5px !important;    
-    }
- 
+.content .mdc-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
-.content .mdc-label { 
-    display: flex; 
-    align-items: center;
-    gap: 5px;
+.content__icon {
+  font-size: 1rem;
 }
 
-.content__icon { 
-    // display: flex;
-    // align-items: center;
-    font-size: 1rem;
+.content__slider {
+  mat-slider {
+    width: 500px;
+  }
+}
+
+.spinner {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+::ng-deep {
+  .dropzone .mdc-notched-outline__notch {
+    border-right: none;
+  }
 }
