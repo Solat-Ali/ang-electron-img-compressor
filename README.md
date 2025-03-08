@@ -23,6 +23,12 @@ With this sample, you can:
 
 ## Screenshots:
 
+![image](https://github.com/user-attachments/assets/451364c4-ed06-4222-b331-1704c48996d8)
+![image](https://github.com/user-attachments/assets/87d66385-3f85-4d7c-906f-874c7415e865)
+![image](https://github.com/user-attachments/assets/bc769788-42d4-49e2-880b-f1306ff253fd)
+![image](https://github.com/user-attachments/assets/bd50fd41-1fae-4d57-804f-5f99fdff89a4)
+![image](https://github.com/user-attachments/assets/05d5b8c2-7d85-46e7-b403-1dd3cefa5173)
+
 ## Possible Future Improvements:
 - This was just a POC (proof-of-concept) application. It can be enhanced to include different types of images such as JPEG, SVG etc. 
 - We can include multiple configuration options e.g. lossy, lossless, Color depth, dithering etc. For example, [here](https://www.npmjs.com/package/imagemin-pngquant) is a list of options available for PNG plugin. 
