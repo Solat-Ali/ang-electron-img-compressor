@@ -1,7 +1,7 @@
 [![Angular Logo](https://www.vectorlogo.zone/logos/angular/angular-icon.svg)](https://angular.io/) [![Electron Logo](https://www.vectorlogo.zone/logos/electronjs/electronjs-icon.svg)](https://electronjs.org/)
 
 # Introduction
-This is a simple proof-of-concept application for image compressionusing Angular, Electron and `imagemin` library. 
+This is a simple proof-of-concept application for image compression using Angular, Electron and `imagemin` library. 
 
 ## Tech. Stack: 
 - Angular v17.3.6
