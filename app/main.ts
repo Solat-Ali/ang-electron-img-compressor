@@ -107,17 +107,16 @@ try {
 ipcMain.on(
   'compress-images',
   async (event, compressionReqs: ImgCompressionRequest[]) => {
+    console.log(compressionReqs);
+
     try {
       await Promise.all(compressionReqs.map((req) => compress(req)));
-
       event.reply('compress-images-response', {
         success: true,
         response: 'files compressed',
       });
     } catch (error) {
-      console.log('Error: ', error);
-
-      // Send an error response back to the Angular component
+      console.error('Error:', error);
       event.reply('compress-images-response', {
         success: false,
         response: error,
@@ -127,7 +126,10 @@ ipcMain.on(
 );
 
 async function compress(req: ImgCompressionRequest) {
-  // compress image to destination
+  // Run compression to either destination or temp directory
+  const tempDir = req.tempDir ?? '';
+  const fileSuffix = req.fileSuffix ?? '';
+
   await imagemin([req.filePath], {
     destination: !req.preserveDir ? req.destination : req.tempDir,
     plugins: [
@@ -137,39 +139,43 @@ async function compress(req: ImgCompressionRequest) {
     ],
   });
 
-  if (!req.preserveDir) {
-    return;
-  }
+  if (!req.preserveDir) return;
 
-  let tempFilePath = req.tempDir + '//' + req.fileNameOnly;
+  // Build file paths using path.join
+  const tempFilePath = path.join(tempDir, req.fileName);
 
-  if (!req.fileSuffix) {
-    // overwrite file 
+  if (req.overwriteFile) {
+    // copy file from "temp" to "destination" and overwrite
     await fs.copyFile(
-      tempFilePath + req.fileExt,
-      req.destination + req.fileName,
+      tempFilePath,
+      path.join(req.destination, req.fileName),
       () => {}
     );
   } 
-
+  
   else {
-    // Rename the file with a suffix
+    // copy file from "temp" to "destination" with suffix renaming
+    const suffixFileName = req.fileNameOnly + fileSuffix + req.fileExt;
+    const tempSuffixFilePath = path.join(tempDir, suffixFileName); 
+
+    // Rename file in "temp" with suffix
     await fs.rename(
-      tempFilePath + req.fileExt,
-      tempFilePath + req.fileSuffix + req.fileExt,
+      tempFilePath,
+      tempSuffixFilePath,
       () => {}
     );
-    tempFilePath += req.fileSuffix + req.fileExt;
 
+    // move file from "temp" to "destination"
     await fs.copyFile(
-      tempFilePath,
-      req.destination + req.fileNameOnly + req.fileSuffix + req.fileExt,
+      tempSuffixFilePath,
+      path.join(req.destination, suffixFileName),
       () => {}
     );
   }
 
-  // delete temp directory
-  await fs.rm(req.tempDir ?? '', { recursive: true, force: true}, ()=> {});
+  // delete "temp" directory
+  await fs.rm(req.tempDir ?? '', { recursive: true, force: true }, () => {});
+
 }
 
 ipcMain.on('select-directory', async (event, arg) => {

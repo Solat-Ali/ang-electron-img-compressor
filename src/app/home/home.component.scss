@@ -10,6 +10,10 @@
 
 .content__icon {
   font-size: 1rem;
+
+  &-overwrite {
+    padding-top: 3px;
+  }
 }
 
 .content__slider {
@@ -18,14 +22,10 @@
   }
 }
 
-.spinner {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 5px;
-}
-
 ::ng-deep {
-  .dropzone .mdc-notched-outline__notch {
-    border-right: none;
+  .dropzone {
+    .mdc-notched-outline__notch {
+      border-right: none;
+    }
   }
 }

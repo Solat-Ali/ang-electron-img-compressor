@@ -1,7 +1,7 @@
-<!-- @if(electronService.isElectron) {
+@if(!_electronService.isElectron) {
 <h1 class="mt-60 text-center text-red-600">Sorry, but this application needs to run in Electron!</h1>
 }
-@else { -->
+@else {
 <div class="content mx-auto p-5">
   <div class="text-center">
     <h1 class="mt-5">
@@ -13,18 +13,20 @@
   </div>
 
   <div class="cbg-white rounded px-8 pt-6 pb-8 mb-4">
- 
-    <form #reqForm [formGroup]="imgCompressionForm" (ngSubmit)="compress()">
-      <div class="mb-8">
+
+    <form #reqForm [formGroup]="imgCompressionForm" (ngSubmit)="compress()" #formDirective="ngForm">
+      <div class="mb-4">
         <label class="block text-gray-700 text-sm font-bold mb-2" for="username">
           1. Select Images
           <span class="text-red-500">*</span>
         </label>
 
-        <mat-form-field class="w-full dropzone">
+        <mat-form-field class="w-full dropzone hover:cursor-pointer active:cursor-pointer focus:cursor-pointer">
+          
           <mat-label>Drag & Drop Images, Or Browse to Select</mat-label>
+          
           <ngx-mat-dropzone>
-            <input type="file" fileInput multiple [formControl]="filesCtrl" accept="image/png" />
+            <input type="file" multiple accept="image/png" fileInput [formControl]="filesCtrl" [mode]="'append'" />
             @for (file of files; track file.name) {
             <mat-chip-row (removed)="remove(file)">
               {{ file.name }}
@@ -35,6 +37,7 @@
             }
           </ngx-mat-dropzone>
           <mat-icon matSuffix>cloud_upload</mat-icon>
+
           <mat-error *ngIf="filesCtrl?.hasError('required')">
             At least 1 image is required
           </mat-error>
@@ -43,71 +46,71 @@
             Only PNG images are accepted
           </mat-error>
 
+          <mat-error *ngIf="filesCtrl?.hasError('maxSize')">
+            File size cannot exceed 10 MB
+          </mat-error>
+
         </mat-form-field>
       </div>
 
-      <div class="mb-4">
-        <div class="flex items-center gap-2">
-          <label class="block text-gray-700 text-sm font-bold mb-2">
-            2. Output Directory
-          </label>
-          <mat-icon fontIcon="info_outline" class="content__icon"
-            [matTooltip]="'Select an option to either preserve each file original directory or place all files in custom output directory'"
-            [matTooltipPosition]="'right'"></mat-icon>
-        </div>
-
-        <mat-radio-group formControlName="outputDirectoryConfig" class="flex flex-col">
-
-          <mat-radio-button value="newDirectory">
-            <div class="mt-2">
-              <label for="selectFolder">
-                <button type="button" mat-stroked-button color="primary" class="text-md px-1"
-                  [disabled]="showPreserveDir" (click)="selectDirectory()"> Set Custom Directory </button>
-                &nbsp; {{ outputDir?.value}}
-              </label>
-            </div>
-
-            @if(outputDir?.hasError('required') && (outputDir?.touched || submitted)){
-            <mat-error>
-              Please select output directory
-            </mat-error>
-            }
-          </mat-radio-button>
-
-          <mat-radio-button value="preserve">Preserve Directories</mat-radio-button>
-
-        </mat-radio-group>
+      <div class="flex items-center gap-2">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+          2. Output Directory
+        </label>
+        <mat-icon fontIcon="info_outline" class="content__icon"
+          [matTooltip]="'Select an option to either preserve each file original directory or place all files in custom output directory'"
+          [matTooltipPosition]="'right'"></mat-icon>
       </div>
 
+      <mat-radio-group formControlName="outputDirectoryConfig" class="flex flex-col">
+
+        <mat-radio-button value="newDirectory">
+          <div class="mt-2">
+            <label for="selectFolder">
+              <button type="button" mat-stroked-button color="primary" class="text-md px-1" [disabled]="showPreserveDir"
+                (click)="selectDirectory()"> Set Custom Directory </button>
+              &nbsp;
+
+              <span class="pt-2 italic">{{ outputDirCtrl?.value}} </span>
+            </label>
+          </div>
+
+          @if(outputDirCtrl?.hasError('required') && (outputDirCtrl?.touched || submitted)){
+          <mat-error>
+            Please select output directory
+          </mat-error>
+          }
+        </mat-radio-button>
+
+        <mat-radio-button value="preserve">Preserve Directories</mat-radio-button>
+
+      </mat-radio-group>
+
       @if(showPreserveDir){
-      <div class="mb-8">
-        <mat-checkbox formControlName="overwrite">
-          <span class="flex gap-2">
-            Overwrite File?
-            <mat-icon fontIcon="info_outline" class="content__icon"
-              [matTooltip]="'Overwrite files in original directories with same name, or add default suffix to compressed file names'"
-              [matTooltipPosition]="'right'"></mat-icon>
-          </span>  
-          
-        </mat-checkbox>
+      <div class="mt-6 flex gap-2 items-center">
+        <mat-checkbox formControlName="overwrite"></mat-checkbox>
+        <mat-label>Overwrite File?</mat-label>
+        
+        <mat-icon fontIcon="info_outline" class="content__icon content__icon-overwrite"
+          [matTooltip]="'Overwrite files in original directories with same name, or add default suffix to compressed file names'"
+          [matTooltipPosition]="'right'"></mat-icon>
       </div>
       }
 
-      <div class="mb-5">
+      <div class="mt-6">
         <div class="flex items-center gap-2">
           <label class="block text-gray-700 text-sm font-bold mb-2">
             3. Compression Level
           </label>
           <mat-icon fontIcon="info_outline" class="content__icon"
-          [matTooltip]="'Choose a value between 0.1 and 1.0. Higher values mean lower compression and increased compressed file size'"
-          [matTooltipPosition]="'right'"></mat-icon>
+            [matTooltip]="'Choose a value between 0.1 and 1.0. Higher values mean lower compression and increased compressed file size'"
+            [matTooltipPosition]="'right'"></mat-icon>
         </div>
-
 
         <div class="content__slider">
           <mat-slider min="0.1" max="1.0" step="0.1" discrete="true">
-            <input value="0.2" matSliderStartThumb formControlName="minQuality">
-            <input value="0.8" matSliderEndThumb formControlName="maxQuality">
+            <input matSliderStartThumb formControlName="minQuality">
+            <input matSliderEndThumb formControlName="maxQuality">
           </mat-slider>
         </div>
       </div>
@@ -115,12 +118,12 @@
       <div class="flex justify-center gap-5">
         <button type="submit" class="cta" mat-raised-button>
           @if((loading$ | async) === true){
-          <mat-spinner class="spinner" diameter="20" color="accent"></mat-spinner>
+          <mat-spinner class="inline-block align-middle mr-2" diameter="20" color="accent"></mat-spinner>
           }
           Compress
         </button>
 
-        <button type="button" mat-raised-button color="warn" (click)="reset()">
+        <button type="button" mat-raised-button color="warn" (click)="reset(formDirective)">
           Reset
         </button>
       </div>
@@ -128,3 +131,4 @@
 
   </div>
 </div>
+}

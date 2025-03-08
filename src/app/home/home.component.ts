@@ -8,6 +8,7 @@ import {
 import {
   FormBuilder,
   FormControl,
+  FormGroupDirective,
   FormsModule,
   ReactiveFormsModule,
   Validators,
@@ -23,19 +24,13 @@ import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  DropzoneCdkModule,
-  FileInputValidators,
-  FileInputValue,
-} from '@ngx-dropzone/cdk';
+import { DropzoneCdkModule, FileInputValidators, FileInputValue } from '@ngx-dropzone/cdk';
 import { DropzoneMaterialModule } from '@ngx-dropzone/material';
 import { BehaviorSubject } from 'rxjs';
 import { ElectronService } from '../core/services';
 import {
-  DEFAULT_FILE_SUFFIX,
-  DEFAULT_MAX_QUALITY,
-  DEFAULT_MIN_QUALITY,
-  DEFAULT_OUTPUT_DIRECTORY_CONFIG,
+  DEFAULT_FORM_VALUES,
+  ImgCompressionForm,
   ImgCompressionRequest,
 } from '../data-access';
 import { ImgCompressionService } from '../data-access/services/img-compression.service';
@@ -66,10 +61,11 @@ import { ImgCompressionService } from '../data-access/services/img-compression.s
   providers: [ImgCompressionService],
 })
 export class HomeComponent {
-  public electronService = inject(ElectronService);
-  public compressionService = inject(ImgCompressionService);
-  cdr = inject(ChangeDetectorRef);
+  _electronService = inject(ElectronService);
+  _compressionService = inject(ImgCompressionService);
+  _cdr = inject(ChangeDetectorRef);
   _snackBar = inject(MatSnackBar);
+  _fb = inject(FormBuilder);
 
   loading$ = new BehaviorSubject<boolean>(false);
 
@@ -79,112 +75,95 @@ export class HomeComponent {
   submitted = false;
 
   // form group
-  fb = inject(FormBuilder);
-  imgCompressionForm = this.fb.group({
-    files: new FormControl<FileInputValue>(null, [
+  imgCompressionForm = this._fb.group<ImgCompressionForm>({
+    droppedFiles: new FormControl<FileInputValue>(DEFAULT_FORM_VALUES.files, [
       Validators.required,
       FileInputValidators.accept('image/png'),
+      FileInputValidators.maxSize(10485760) //10mb max. size limit
     ]),
-    outputDirectoryConfig: new FormControl<string>(
-      DEFAULT_OUTPUT_DIRECTORY_CONFIG
+    outputDirectoryConfig: new FormControl (
+      DEFAULT_FORM_VALUES.outputDirectoryConfig
     ),
-    outputDirectory: new FormControl<string | null>(null, Validators.required),
-    overwrite: new FormControl<boolean>(false),
-    minQuality: new FormControl<number>(0.6),
-    maxQuality: new FormControl<number>(0.8),
-    fileSuffix: new FormControl<string | null>(null),
+    outputDirectory: new FormControl(
+      DEFAULT_FORM_VALUES.outputDirectory,
+      Validators.required
+    ),
+    overwrite: new FormControl(DEFAULT_FORM_VALUES.overwrite),
+    minQuality: new FormControl(DEFAULT_FORM_VALUES.minQuality),
+    maxQuality: new FormControl(DEFAULT_FORM_VALUES.maxQuality),
+    fileSuffix: new FormControl(DEFAULT_FORM_VALUES.fileSuffix),
   });
-
-  // control getters
-  get filesCtrl() {
-    return this.imgCompressionForm.get('files');
-  }
-
-  get outputDir() {
-    return this.imgCompressionForm.get('outputDirectory');
-  }
-
-  get outputDirConfig() {
-    return this.imgCompressionForm.get('outputDirectoryConfig');
-  }
-
-  get overwrite() {
-    return this.imgCompressionForm.get('overwrite');
-  }
-
-  get files() {
-    const _files = this.filesCtrl?.value;
-    if (!_files) return [];
-    return Array.isArray(_files) ? _files : [_files];
-  }
-
-  remove(file: File) {
-    if (Array.isArray(this.filesCtrl?.value)) {
-      this.filesCtrl?.patchValue(
-        this.filesCtrl?.value.filter((i) => i !== file)
-      );
-    } else {
-      this.filesCtrl?.patchValue(null);
-    }
-
-    this.filesCtrl?.updateValueAndValidity();
-  }
 
   constructor() {
     this.setupFormValueChangesListener();
   }
 
+  // Getters for cleaner access
+  get filesCtrl() {
+    return this.imgCompressionForm.get('droppedFiles');
+  }
+  get outputDirCtrl() {
+    return this.imgCompressionForm.get('outputDirectory');
+  }
+  get outputDirConfigCtrl() {
+    return this.imgCompressionForm.get('outputDirectoryConfig');
+  }
+  get overwriteCtrl() {
+    return this.imgCompressionForm.get('overwrite');
+  }
+
+  // Mat-Chips file preview
+  get files() {
+    const files = this.filesCtrl?.value;
+    return files ? (Array.isArray(files) ? files : [files]) : [];
+  }
+
+  // Remove a file from the control
+  remove(file: File) {
+    const files = this.filesCtrl?.value;
+
+    this.filesCtrl?.patchValue(
+      Array.isArray(files) ? files.filter((f) => f !== file) : null
+    );
+    this.filesCtrl?.updateValueAndValidity();
+  }
+
+  // Update validators based on config value changes
   setupFormValueChangesListener() {
-    this.imgCompressionForm.controls[
-      'outputDirectoryConfig'
-    ].valueChanges.subscribe((value) => {
-      this.submitted = false;
-
-      this.showPreserveDir = value === 'preserve';
-      this.outputDir?.reset('');
-
-      if (this.showPreserveDir) {
-        this.outputDir?.clearValidators();
-        this.overwrite?.reset(false);
-      } else {
-        this.outputDir?.setValidators(Validators.required);
-      }
-
-      this.outputDir?.updateValueAndValidity();
-    });
+    this.imgCompressionForm
+      .get('outputDirectoryConfig')
+      ?.valueChanges.subscribe((value) => {
+        this.submitted = false;
+        this.showPreserveDir = value === 'preserve';
+        this.outputDirCtrl?.reset('');
+        if (this.showPreserveDir) {
+          this.outputDirCtrl?.clearValidators();
+          this.overwriteCtrl?.reset(false);
+        } else {
+          this.outputDirCtrl?.setValidators(Validators.required);
+        }
+        this.outputDirCtrl?.updateValueAndValidity();
+      });
   }
 
-  resetForm() {
-    this.imgCompressionForm = this.fb.group({
-      files: new FormControl<FileInputValue>(null, [
-        Validators.required,
-        FileInputValidators.accept('image/png'),
-      ]),
-      outputDirectoryConfig: new FormControl<string>(
-        DEFAULT_OUTPUT_DIRECTORY_CONFIG
-      ),
-      outputDirectory: new FormControl<string | null>(
-        null,
-        Validators.required
-      ),
-      overwrite: new FormControl<boolean>(false),
-      minQuality: new FormControl<number>(0.6),
-      maxQuality: new FormControl<number>(0.8),
-      fileSuffix: new FormControl<string | null>(null),
-    });
-  }
-
-  cleanDirPath(filePath: string) {
+  // file utils
+  escapePath(filePath: string) {
     return filePath?.replace(/\\/g, '//');
   }
 
-  getOriginalDir(filePath: string) {
-    return this.cleanDirPath(filePath)?.replace(/(.*)\/\/[^\/]+$/, '$1');
+  getFileExt(filePath: string) {
+    return filePath?.match(/(\.[^.]+)$/)?.[0] || '';
+  }
+
+  getFileNameWithoutExt(filePath: string) {
+    return filePath?.match(/([^\/\\]+)(?=\.[^.]+$)/)?.[1] || '';
+  }
+  getFileDir(filePath: string) {
+    return this.escapePath(filePath)?.replace(/(.*)\/\/[^\/]+$/, '$1');
   }
 
   getTempDir(filePath: string) {
-    filePath = this.getOriginalDir(filePath);
-    return `${filePath}//compressed`;
+    return `${this.getFileDir(filePath)}//compressed`;
   }
 
   compress() {
@@ -195,70 +174,75 @@ export class HomeComponent {
     }
 
     this.loading$.next(true);
-    const compressionReqs: ImgCompressionRequest[] = [];
+    const preserveDir = this.outputDirConfigCtrl?.value === 'preserve';
+    const quality = {
+      min:
+        this.imgCompressionForm.get('minQuality')?.value ??
+        DEFAULT_FORM_VALUES.minQuality,
+      max:
+        this.imgCompressionForm.get('maxQuality')?.value ??
+        DEFAULT_FORM_VALUES.maxQuality,
+    };
 
-    this.files.forEach((file) => {
-      compressionReqs.push({
-        fileName: file?.name,
-        fileNameOnly: file?.name?.replace(/\.[^/.]+$/, ''),
-        fileExt: '.png',
-        filePath: this.cleanDirPath(file?.path),
-        destination:
-          this.outputDirConfig?.value === 'preserve'
-            ? this.getOriginalDir(file?.path)
-            : this.outputDir?.value ?? '',
-        preserveDir: this.outputDirConfig?.value === 'preserve',
-        overwriteFile: this.overwrite?.value ?? false,
-        tempDir:
-          this.outputDirConfig?.value === 'preserve'
-            ? this.getTempDir(file?.path)
-            : null,
-        fileSuffix:
-          this.outputDirConfig?.value === 'preserve' &&
-          this.overwrite?.value === false
-            ? DEFAULT_FILE_SUFFIX
-            : null,
-        qualityConfig: {
-          min: this.imgCompressionForm.get('minQuality')?.value ?? DEFAULT_MIN_QUALITY,
-          max: this.imgCompressionForm.get('minQuality')?.value ?? DEFAULT_MAX_QUALITY,
-        },
-      });
-    });
+    const compressionReqs: ImgCompressionRequest[] = this.files.map((file) => ({
+      fileName: file?.name,
+      fileNameOnly: this.getFileNameWithoutExt(file?.path),
+      fileExt: this.getFileExt(file?.path),
+      filePath: this.escapePath(file?.path),
+      destination: preserveDir
+        ? this.getFileDir(file?.path)
+        : this.outputDirCtrl?.value ?? '',
+      preserveDir: preserveDir,
+      overwriteFile: this.overwriteCtrl?.value ?? false,
+      tempDir: preserveDir ? this.getTempDir(file?.path) : null,
+      fileSuffix:
+        preserveDir && !this.overwriteCtrl?.value
+          ? DEFAULT_FORM_VALUES.fileSuffix
+          : null,
+      qualityConfig: quality,
+    }));
 
-    console.log('Request: ', compressionReqs);
-
-    this.compressionService.compressImages(compressionReqs, (evt, message) => {
-      console.log('callback event: ', evt);
-      console.log('callback message: ', message);
-
+    this._compressionService.compressImages(compressionReqs, (evt, message) => {
       this.loading$.next(false);
-      this.cdr.detectChanges();
+
+      if(!message?.success){
+        this._snackBar.open('Sorry, but something went wrong!', '', {
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          duration: 3000
+        });
+
+        console.log(message);
+      }
+
+      this._cdr.detectChanges();
     });
   }
 
-  reset() {
-    this.loading$.next(false);
+  reset(formDirective: FormGroupDirective) {
     this.submitted = false;
+    this.loading$.next(false);
 
-    this.resetForm();
-    this.imgCompressionForm.reset(this.imgCompressionForm.value);
+    formDirective.resetForm();
+    this.imgCompressionForm.reset(DEFAULT_FORM_VALUES);
+    this._cdr.detectChanges();
   }
 
   selectDirectory() {
-    this.electronService.ipcRenderer.send('select-directory');
+    this._electronService.ipcRenderer.send('select-directory');
 
-    this.electronService.ipcRenderer.once(
+    this._electronService.ipcRenderer.once(
       'select-directory-response',
       (evt, message) => {
-        console.log(message.selectedDirectory);
 
         this.imgCompressionForm.controls['outputDirectory'].patchValue(
-          message.selectedDirectory?.replace(/\\/g, '//')
+          this.escapePath(message?.selectedDirectory)
         );
         this.imgCompressionForm.controls[
           'outputDirectory'
         ].updateValueAndValidity();
-        this.cdr.detectChanges();
+
+        this._cdr.detectChanges();
       }
     );
   }
