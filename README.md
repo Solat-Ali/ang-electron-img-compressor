@@ -3,7 +3,7 @@
 # Introduction
 This is a simple proof-of-concept application for image compressionusing Angular, Electron and `imagemin` library. 
 
-### Tech. Stack: 
+## Tech. Stack: 
 - Angular v17.3.6
 - Electron v30.0.1
 - Angular Material v17.3.6
@@ -12,7 +12,7 @@ This is a simple proof-of-concept application for image compressionusing Angular
 - imagemin v7.0.1
 - imagemin-pngquant v7.0.0
 
-### Main Features: 
+## Main Features: 
 With this sample, you can:
 
 - Select multiple images for compression using `ngx-dropzone` package
@@ -21,19 +21,19 @@ With this sample, you can:
 - Compress images locally for free using `imagemin` optimization
 - Package your app into an executable file for Linux, Windows & Mac
 
-#### Screenshots:
+## Screenshots:
 
-#### Possible Future Improvements:
+## Possible Future Improvements:
 - This was just a POC (proof-of-concept) application. It can be enhanced to include different types of images such as JPEG, SVG etc. 
 - We can include multiple configuration options e.g. lossy, lossless, Color depth, dithering etc. For example, [here](https://www.npmjs.com/package/imagemin-pngquant) is a list of options available for PNG plugin. 
 - This project uses Angular v17, but it can be upgraded to latest version for Angular, Electron and dependent.
 
-#### 🤝 Contributing
+## 🤝 Contributing
 Feel free to fork, improve, or share feedback via issues or pull requests!
 
-#### 📜 License
+## 📜 License
 This project is licensed under the MIT License.
 
-#### About Me
+## About Me
 Hi, I'm Solat, a passionate software engineer specializing in Angular. I’m open to exciting new projects and remote opportunities. Feel free to connect with me on [LinkedIn](https://www.linkedin.com/in/solat-ali).
 If you find this repository useful or inspiring, please consider giving it a ⭐!
