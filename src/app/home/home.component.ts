@@ -100,7 +100,7 @@ export class HomeComponent {
 
   // Getters for cleaner access
   get filesCtrl() {
-    return this.imgCompressionForm.get('droppedFiles');
+    return this.imgCompressionForm.get('droppedFiles') as FormControl<FileInputValue>;
   }
   get outputDirCtrl() {
     return this.imgCompressionForm.get('outputDirectory');
